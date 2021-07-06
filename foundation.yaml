@@ -13,27 +13,29 @@ servers:
   - url: 'https://integration.api.talenttech.ru/v1'
 tags:
   - name: User
-    description: Управление пользователями
+    description: |
+      Управление пользователями
   - name: Authentication
-    description: Аутентификационные данные пользователей    
+    description: |
+      Аутентификационные данные пользователей
   - name: Team
-    description: Управление организационной структурой компании
-security: 
-  - ttAuth: 
-    - 'write:users'
-    - 'read:users'
-    - 'write:auth'
-    - 'write:teams'
-    - 'read:teams'
-    
+    description: |
+      Управление организационной структурой компании
+security:
+  - ttAuth:
+      - 'write:users'
+      - 'read:users'
+      - 'write:auth'
+      - 'write:teams'
+      - 'read:teams'
 paths:
   /user:
     post:
       tags:
         - User
       security:
-      - ttAuth:
-        - 'write:users'
+        - ttAuth:
+            - 'write:users'
       summary: Создать пользователя
       description: >
         Операция создаёт пользователя и возвращает его uuid.
@@ -51,16 +53,22 @@ paths:
                   id:
                     type: string
                     format: uuid
-
   '/user/{userid}/disable':
     post:
       tags:
         - User
       security:
-      - ttAuth:
-        - 'write:users'
+        - ttAuth:
+            - 'write:users'
       summary: Заблокировать пользователя в компании
-      description: Descr
+      description: >
+        Блокировка пользователя деактивирует все учётные данные пользователя
+        которые принадлежат данной компании. Если пользователь имеет другие
+        возможности входа, то он сможет войти в систему.  Долнительно блокировка
+        пользователя, снимает его со всех позиций на которых пользователь
+        находится. Т.е. если после блокировки его обратно разблокировать, то его
+        будет необходимо добавить на позиции в командах иначе он не сможет
+        полноценно пользоваться системой.
       parameters:
         - name: userid
           in: path
@@ -72,16 +80,18 @@ paths:
         '200':
           description: Ok
           content: {}
-
   '/user/{userid}/enable':
     post:
       tags:
         - User
       security:
-      - ttAuth:
-        - 'write:users'
+        - ttAuth:
+            - 'write:users'
       summary: Разблокировать пользователя в компании
-      description: Descr
+      description: >
+        Обратно активирует все доступные пользователю способы аутентификации в
+        рамках текущей компании. Внимание: пользователя необходимо добавить на
+        занимаемую позицию!
       parameters:
         - name: userid
           in: path
@@ -93,28 +103,28 @@ paths:
         '200':
           description: Ok
           content: {}
-
   /user/find:
     get:
       tags:
         - User
       security:
-      - ttAuth:
-        - 'read:users'
+        - ttAuth:
+            - 'read:users'
       summary: Найти пользователя по аутентификационным данным
-      description: Descr
+      description: >
+        Ищет пользователя по аутентификационным данным. Данный метод ищет только
+        внутри аутентификационных данных принадлежащих текущей компании.
       responses:
         '200':
           description: Ok
           content: {}
-
   '/user/{userid}/auth/create':
     post:
       tags:
         - Authentication
       security:
-      - ttAuth:
-        - 'write:auth'
+        - ttAuth:
+            - 'write:auth'
       summary: Добавляет способ аутентификации пользователя
       description: >
         У каждого пользователя может быть неограниченное количество способов
@@ -167,16 +177,18 @@ paths:
         '409':
           description: Способ конфликтует с имеющимся. Никаких изменений не произведено.
           content: {}
-
   '/user/{userid}/auth/reset':
     post:
       tags:
         - Authentication
       security:
-      - ttAuth:
-        - 'write:auth'
+        - ttAuth:
+            - 'write:auth'
       summary: Изменить пароль для аутентификационных данных
-      description: Descr
+      description: >
+        Меняет пароль пользователя если указанный тип данных его поддерживает. В
+        ответ из вызова возвращатся новый пароль. Внимание: пароль видно только
+        1 раз в ответе из вызова.
       parameters:
         - name: userid
           in: path
@@ -188,16 +200,18 @@ paths:
         '200':
           description: Ok
           content: {}
-
   '/user/{userid}/auth/disable':
     post:
       tags:
         - Authentication
       security:
-      - ttAuth:
-        - 'write:auth'
+        - ttAuth:
+            - 'write:auth'
       summary: Заблокировать способ аутентификации
-      description: Descr
+      description: >
+        Блокирует способ аутентификации пользователя. Больше пользователь не
+        сможет аутентифицироваться с этим способом. Внимание: если пользователь
+        был аутентифицирован этим способом, то все его сессии аннулируются!
       parameters:
         - name: userid
           in: path
@@ -209,16 +223,17 @@ paths:
         '200':
           description: Ok
           content: {}
-
   '/user/{userid}/auth/enable':
     post:
       tags:
         - Authentication
       security:
-      - ttAuth:
-        - 'write:auth'
+        - ttAuth:
+            - 'write:auth'
       summary: Разблокировать способ входа
-      description: Descr
+      description: >
+        Включает способ аутентификации пользователя. Если способ включен - то не
+        делает ничего.
       parameters:
         - name: userid
           in: path
@@ -230,16 +245,17 @@ paths:
         '200':
           description: Ok
           content: {}
-
   '/user/{userid}/auth':
     get:
       tags:
         - Authentication
       security:
-      - ttAuth:
-        - 'read:users'
+        - ttAuth:
+            - 'read:users'
       summary: Получить список способов аутентификации
-      description: Descr
+      description: >
+        Возвращает список способов аутентификации пользователя в рамках текущей
+        компании.
       parameters:
         - name: userid
           in: path
@@ -251,46 +267,49 @@ paths:
         '200':
           description: Ok
           content: {}
-
-
   /team:
     post:
       tags:
-      - Team
+        - Team
       security:
-      - ttAuth:
-        - 'write:teams'
+        - ttAuth:
+            - 'write:teams'
       summary: Создать команду в компании
       description: >
-        Создаёт команду в оргструктуре организации. Может быть указан id предыдущей команды(команд) если команда создася при помощи слияния или ветвления.
+        Создаёт команду в оргструктуре организации. Может быть указан id
+        предыдущей команды(команд) если команда создася при помощи слияния или
+        ветвления. В случае создания команды с указанием предыдущих ID все
+        позиции из предыдущих команд автоматически переносятся в новую команду.
+        Если в ID передаётся активная команда, то она будет автоматически
+        деактивирована в момент создания новой команды.
       responses:
         '200':
           description: Descr
           content: {}
     get:
       tags:
-      - Team
+        - Team
       security:
-      - ttAuth:
-        - 'read:teams'
+        - ttAuth:
+            - 'read:teams'
       summary: Корневой список команд
       description: >
-        Выводит корневой список команд в компании. Для вывода дочерних команд нужно использовать вызов: GET /team/{teamid}
+        Выводит корневой список команд в компании. Для вывода дочерних команд
+        нужно использовать вызов: GET /team/{teamid}
       responses:
         '200':
           description: Descr
           content: {}
-    
-  /team/{teamid}:
+  '/team/{teamid}':
     get:
       tags:
-      - Team
+        - Team
       security:
-      - ttAuth:
-        - 'read:teams'
-      summary: Summary
-      description: >
-        Descr
+        - ttAuth:
+            - 'read:teams'
+      summary: Детальные данные команды
+      description: |
+        Возвращает детальные данные команды и список дочерних команд.
       parameters:
         - name: teamid
           in: path
@@ -302,17 +321,18 @@ paths:
         '200':
           description: Descr
           content: {}
-    
-  /team/{teamid}/deactivate:
+  '/team/{teamid}/deactivate':
     post:
       tags:
-      - Team
+        - Team
       security:
-      - ttAuth:
-        - 'write:teams'
-      summary: Summary
+        - ttAuth:
+            - 'write:teams'
+      summary: Деактивация команды
       description: >
-        Descr
+        Метод деактивирует команду. После деактивации все позиции команды
+        "повисают в воздухе" до тех пор пока эта команда не будет использована
+        при создании новой.
       parameters:
         - name: teamid
           in: path
@@ -324,17 +344,16 @@ paths:
         '200':
           description: Descr
           content: {}
-  
-  /team/{teamid}/position:
+  '/team/{teamid}/position':
     post:
       tags:
-      - Team
+        - Team
       security:
-      - ttAuth:
-        - 'write:teams'
-      summary: Summary
-      description: >
-        Descr
+        - ttAuth:
+            - 'write:teams'
+      summary: Создать позицию
+      description: |
+        Создание позиции в команде.
       parameters:
         - name: teamid
           in: path
@@ -346,17 +365,16 @@ paths:
         '200':
           description: Descr
           content: {}
-    
-  /team/{teamid}/position/{positionid}:
+  '/team/{teamid}/position/{positionid}':
     get:
       tags:
-      - Team
+        - Team
       security:
-      - ttAuth:
-        - 'read:teams'
-      summary: Summary
-      description: >
-        Descr
+        - ttAuth:
+            - 'read:teams'
+      summary: Получить позицию
+      description: |
+        Получение информации о позиции в команде.
       parameters:
         - name: teamid
           in: path
@@ -369,20 +387,22 @@ paths:
           description: Идентификатор позиции
           required: true
           schema:
-            type: string            
+            type: string
       responses:
         '200':
           description: Descr
           content: {}
     put:
       tags:
-      - Team
+        - Team
       security:
-      - ttAuth:
-        - 'write:teams'
-      summary: Summary
+        - ttAuth:
+            - 'write:teams'
+      summary: Обновить позицию
       description: >
-        Descr
+        Обновление данных позиции в команде. В случае передачи нулевого id
+        пользователя, позици становится вакантной, а пользователь который был на
+        ней до этого, удаляется с позиции.
       parameters:
         - name: teamid
           in: path
@@ -395,20 +415,20 @@ paths:
           description: Идентификатор позиции
           required: true
           schema:
-            type: string            
+            type: string
       responses:
         '200':
           description: Descr
           content: {}
     delete:
       tags:
-      - Team
+        - Team
       security:
-      - ttAuth:
-        - 'write:teams'
-      summary: Summary
-      description: >
-        Descr
+        - ttAuth:
+            - 'write:teams'
+      summary: Удалить позицию
+      description: |
+        Удаление позиции из команды.
       parameters:
         - name: teamid
           in: path
@@ -421,40 +441,11 @@ paths:
           description: Идентификатор позиции
           required: true
           schema:
-            type: string 
-      responses:
-        '200':
-          description: Descr
-          content: {}
-      
-  /team/{teamid}/position/{positionid}/unassign:
-    post:  
-      tags:
-      - Team
-      security:
-      - ttAuth: [write:teams]
-      summary: Summary
-      description: >
-        Descr
-      parameters:
-        - name: teamid
-          in: path
-          description: Идентификатор команды
-          required: true
-          schema:
             type: string
-        - name: positionid
-          in: path
-          description: Идентификатор позиции
-          required: true
-          schema:
-            type: string 
       responses:
         '200':
           description: Descr
           content: {}
-    
-
 components:
   securitySchemes:
     ttAuth:
