@@ -23,11 +23,11 @@ tags:
       Управление организационной структурой компании
 security:
   - ttAuth:
-      - 'write:users'
-      - 'read:users'
-      - 'write:auth'
-      - 'write:teams'
-      - 'read:teams'
+    - 'users:write'
+    - 'users:read'
+    - 'auth:write'
+    - 'teams:write'
+    - 'teams:read'
 paths:
   /user:
     post:
@@ -35,7 +35,7 @@ paths:
         - User
       security:
         - ttAuth:
-            - 'write:users'
+            - 'users:write'
       summary: Создать пользователя
       description: >
         Операция создаёт пользователя и возвращает его uuid.
@@ -59,7 +59,7 @@ paths:
         - User
       security:
         - ttAuth:
-            - 'write:users'
+            - 'users:write'
       summary: Заблокировать пользователя в компании
       description: >
         Блокировка пользователя деактивирует все учётные данные пользователя
@@ -86,7 +86,7 @@ paths:
         - User
       security:
         - ttAuth:
-            - 'write:users'
+            - 'users:write'
       summary: Разблокировать пользователя в компании
       description: >
         Обратно активирует все доступные пользователю способы аутентификации в
@@ -109,7 +109,7 @@ paths:
         - User
       security:
         - ttAuth:
-            - 'read:users'
+            - 'users:read'
       summary: Найти пользователя по аутентификационным данным
       description: >
         Ищет пользователя по аутентификационным данным. Данный метод ищет только
@@ -124,7 +124,7 @@ paths:
         - Authentication
       security:
         - ttAuth:
-            - 'write:auth'
+            - 'auth:write'
       summary: Добавляет способ аутентификации пользователя
       description: >
         У каждого пользователя может быть неограниченное количество способов
@@ -183,7 +183,7 @@ paths:
         - Authentication
       security:
         - ttAuth:
-            - 'write:auth'
+            - 'auth:write'
       summary: Изменить пароль для аутентификационных данных
       description: >
         Меняет пароль пользователя если указанный тип данных его поддерживает. В
@@ -206,7 +206,7 @@ paths:
         - Authentication
       security:
         - ttAuth:
-            - 'write:auth'
+            - 'auth:write'
       summary: Заблокировать способ аутентификации
       description: >
         Блокирует способ аутентификации пользователя. Больше пользователь не
@@ -229,7 +229,7 @@ paths:
         - Authentication
       security:
         - ttAuth:
-            - 'write:auth'
+            - 'auth:write'
       summary: Разблокировать способ входа
       description: >
         Включает способ аутентификации пользователя. Если способ включен - то не
@@ -251,7 +251,7 @@ paths:
         - Authentication
       security:
         - ttAuth:
-            - 'read:users'
+            - 'users:read'
       summary: Получить список способов аутентификации
       description: >
         Возвращает список способов аутентификации пользователя в рамках текущей
@@ -273,7 +273,7 @@ paths:
         - Team
       security:
         - ttAuth:
-            - 'write:teams'
+            - 'teams:write'
       summary: Создать команду в компании
       description: >
         Создаёт команду в оргструктуре организации. Может быть указан id
@@ -291,7 +291,7 @@ paths:
         - Team
       security:
         - ttAuth:
-            - 'read:teams'
+            - 'teams:read'
       summary: Корневой список команд
       description: >
         Выводит корневой список команд в компании. Для вывода дочерних команд
@@ -306,7 +306,7 @@ paths:
         - Team
       security:
         - ttAuth:
-            - 'read:teams'
+            - 'teams:read'
       summary: Детальные данные команды
       description: |
         Возвращает детальные данные команды и список дочерних команд.
@@ -327,7 +327,7 @@ paths:
         - Team
       security:
         - ttAuth:
-            - 'write:teams'
+            - 'teams:write'
       summary: Деактивация команды
       description: >
         Метод деактивирует команду. После деактивации все позиции команды
@@ -350,7 +350,7 @@ paths:
         - Team
       security:
         - ttAuth:
-            - 'write:teams'
+            - 'teams:write'
       summary: Создать позицию
       description: |
         Создание позиции в команде.
@@ -371,7 +371,7 @@ paths:
         - Team
       security:
         - ttAuth:
-            - 'read:teams'
+            - 'teams:read'
       summary: Получить позицию
       description: |
         Получение информации о позиции в команде.
@@ -397,7 +397,7 @@ paths:
         - Team
       security:
         - ttAuth:
-            - 'write:teams'
+            - 'teams:write'
       summary: Обновить позицию
       description: >
         Обновление данных позиции в команде. В случае передачи нулевого id
@@ -425,7 +425,7 @@ paths:
         - Team
       security:
         - ttAuth:
-            - 'write:teams'
+            - 'teams:write'
       summary: Удалить позицию
       description: |
         Удаление позиции из команды.
@@ -454,9 +454,9 @@ components:
         implicit:
           authorizationUrl: 'https://talenttech.ru/'
           scopes:
-            'write:users': Редактирование пользователей
-            'read:users': Чтение пользователей
-            'write:auth': Управление аутентификационными данными
-            'write:teams': Редактирование оргструктуры
-            'read:teams': Чтение оргструктуры
+            'users:write': Редактирование пользователей
+            'users:read': Чтение пользователей
+            'auth:write': Управление аутентификационными данными
+            'teams:write': Редактирование оргструктуры
+            'teams:read': Чтение оргструктуры
 
