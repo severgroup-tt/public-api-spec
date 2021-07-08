@@ -23,11 +23,11 @@ tags:
       Управление организационной структурой компании
 security:
   - ttAuth:
-    - 'users:write'
-    - 'users:read'
-    - 'auth:write'
-    - 'teams:write'
-    - 'teams:read'
+      - 'users:write'
+      - 'users:read'
+      - 'auth:write'
+      - 'teams:write'
+      - 'teams:read'
 paths:
   /user:
     post:
@@ -77,8 +77,11 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Ok
+        '201':
+          description: Операция удачна
+          content: {}
+        '404':
+          description: Пользователь не найден
           content: {}
   '/user/{userid}/enable':
     post:
@@ -100,8 +103,11 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Ok
+        '201':
+          description: Пользователь разблокирован
+          content: {}
+        '404':
+          description: Пользователь не найде
           content: {}
   /user/find:
     get:
@@ -117,6 +123,16 @@ paths:
       responses:
         '200':
           description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+        '404':
+          description: Пользователь не найден
           content: {}
   '/user/{userid}/auth/create':
     post:
@@ -142,26 +158,13 @@ paths:
           required: true
           schema:
             type: string
-        - name: type
+        - name: auth
           in: query
           required: true
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  type:
-                    type: string
-                    description: Способ аутентификации
-                    enum:
-                      - email
-                      - phone
-                      - login
-                      - ssoid
-                  value:
-                    type: string
-                    description: Значение
-                    format: string
+                $ref: '#/components/schemas/auth'
       responses:
         '200':
           description: Способ аутентификации добавлен
@@ -196,9 +199,25 @@ paths:
           required: true
           schema:
             type: string
+        - name: auth
+          in: query
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth'
       responses:
         '200':
-          description: Ok
+          description: 'Установлен новый пароль, пароль передан в ответе'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  password:
+                    type: string
+        '404':
+          description: Не найден пользователь или способ аутентификации
           content: {}
   '/user/{userid}/auth/disable':
     post:
@@ -219,9 +238,19 @@ paths:
           required: true
           schema:
             type: string
+        - name: auth
+          in: query
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth'
       responses:
-        '200':
-          description: Ok
+        '201':
+          description: Способ заблокирован
+          content: {}
+        '404':
+          description: Не найден пользователь или способ аутентификации
           content: {}
   '/user/{userid}/auth/enable':
     post:
@@ -241,9 +270,19 @@ paths:
           required: true
           schema:
             type: string
+        - name: auth
+          in: query
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth'
       responses:
-        '200':
-          description: Ok
+        '201':
+          description: Способ разблокирован
+          content: {}
+        '404':
+          description: Не найден пользователь или способ аутентификации
           content: {}
   '/user/{userid}/auth':
     get:
@@ -266,6 +305,29 @@ paths:
       responses:
         '200':
           description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    description: Способ аутентификации
+                    enum:
+                      - EMAIL
+                      - PHONE
+                      - LOGIN
+                      - SSOID
+                  value:
+                    type: string
+                    description: 'Значение способа аутентификации (телефон, email и т.д.)'
+                  active:
+                    type: boolean
+                    description: Признак активности аккаунта
+        '404':
+          description: >-
+            Не найден пользователь или у него нет аутентификационных данных
+            компании
           content: {}
   /team:
     post:
@@ -274,17 +336,45 @@ paths:
       security:
         - ttAuth:
             - 'teams:write'
-      summary: Создать команду в компании
+      summary: Создать/изменить команду в компании
       description: >
-        Создаёт команду в оргструктуре организации. Может быть указан id
-        предыдущей команды(команд) если команда создася при помощи слияния или
-        ветвления. В случае создания команды с указанием предыдущих ID все
-        позиции из предыдущих команд автоматически переносятся в новую команду.
-        Если в ID передаётся активная команда, то она будет автоматически
-        деактивирована в момент создания новой команды.
+        Создаёт или измеяет команду в оргструктуре организации. Может быть
+        указан id предыдущей команды(команд) если команда создася при помощи
+        слияния или ветвления. В случае создания команды с указанием предыдущих
+        ID все позиции из предыдущих команд автоматически переносятся в новую
+        команду. Если в ID передаётся активная команда то фактически будет
+        выполнение обновление данных команды.
+      parameters:
+        - name: team
+          in: query
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: Название команды
+                  id:
+                    type: string
+                    description: >-
+                      Идентификатор команды. Должен быть уникальным для
+                      компании, задаётся тем кто создаёт команду.
+                  parent_id:
+                    type: string
+                    description: Идентификатор родительской команды
+                  prev_id:
+                    type: array
+                    description: Деактивировать и перенести позиции из старых команды
+                    items:
+                      type: string
       responses:
-        '200':
-          description: Descr
+        '201':
+          description: Операция удачно выполнена
+          content: {}
+        '422':
+          description: Ой ?)
           content: {}
     get:
       tags:
@@ -298,8 +388,13 @@ paths:
         нужно использовать вызов: GET /team/{teamid}
       responses:
         '200':
-          description: Descr
-          content: {}
+          description: Список команд
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/team'
   '/team/{teamid}':
     get:
       tags:
@@ -309,7 +404,7 @@ paths:
             - 'teams:read'
       summary: Детальные данные команды
       description: |
-        Возвращает детальные данные команды и список дочерних команд.
+        Возвращает данные команды и список дочерних команд.
       parameters:
         - name: teamid
           in: path
@@ -320,6 +415,12 @@ paths:
       responses:
         '200':
           description: Descr
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/team'
+        '404':
+          description: Команда не найдена или не активна
           content: {}
   '/team/{teamid}/deactivate':
     post:
@@ -341,8 +442,11 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Descr
+        '201':
+          description: Команда деактивирована
+          content: {}
+        '404':
+          description: Команда не найдена или не активна
           content: {}
   '/team/{teamid}/position':
     post:
@@ -447,6 +551,36 @@ paths:
           description: Descr
           content: {}
 components:
+  schemas:
+    auth:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Способ аутентификации
+          enum:
+            - EMAIL
+            - PHONE
+            - LOGIN
+            - SSOID
+        value:
+          type: string
+          description: 'Значение способа аутентификации (телефон, email и т.д.)'
+    team:
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+          description: >
+            Идентификатор команды. Это внешний ключ который идентифицирует
+            команду внутри внешней системы.
+        teams:
+          type: array
+          items:
+            type: string
+            description: Список идентификаторов команд
   securitySchemes:
     ttAuth:
       type: oauth2
