@@ -1,0 +1,226 @@
+info:
+  title: TalentTech pms API V1
+  description: Публичное API ТТ Цели V1
+  contact:
+    email: support@talenttech.ru
+  version: 1.0.0
+swagger: '2.0'
+produces:
+  - application/json
+securityDefinitions:
+  ttAuth:
+    type: oauth2
+    flow: implicit
+    authorizationUrl: 'https://talenttech.ru/'
+    scopes:
+      'tasks:write': Редактирование целей
+      'checkpoints:write': Редактирование отчетов
+security:
+  - ttAuth:
+      - 'tasks:write'
+      - 'checkpoints:write'
+host: api.pms.talenttechlab.com
+basePath: /integration/api/v1
+schemes:
+  - https
+tags:
+  - name: tasks
+    description: Управление целями
+  - name: checkpoints
+    description: Управление отчетами
+paths:
+  '/tasks/{id}/state/approve':
+    post:
+      summary: перевести цель в статус "одобрена"(согласовать)
+      description: 'post /tasks/:id/state/approve'
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - in: header
+          name: Authorization
+          description: заголовок с токеном и его типом Bearer
+          type: string
+          required: true
+        - in: path
+          name: id
+          description: id цели
+          type: integer
+          format: int32
+          required: true
+      security:
+        - ttAuth:
+            - 'tasks:write'
+      responses:
+        '201':
+          description: 'post /tasks/:id/state/approve'
+        '403':
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Not found
+          schema:
+            $ref: '#/definitions/Error'
+        '422':
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/Error'
+      tags:
+        - tasks
+      operationId: postTasksIdStateApprove
+  '/tasks/{id}/state/to_draft':
+    post:
+      summary: перевести цель в статус "черновик"(отклонить согласование)
+      description: 'post /tasks/:id/state/to_draft'
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - in: header
+          name: Authorization
+          description: заголовок с токеном и его типом Bearer
+          type: string
+          required: true
+        - in: path
+          name: id
+          description: id цели
+          type: integer
+          format: int32
+          required: true
+      security:
+        - ttAuth:
+            - 'tasks:write'
+      responses:
+        '201':
+          description: 'post /tasks/:id/state/to_draft'
+        '403':
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Not found
+          schema:
+            $ref: '#/definitions/Error'
+        '422':
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/Error'
+      tags:
+        - tasks
+      operationId: postTasksIdStateToDraft
+  '/tasks/{task_id}/checkpoints':
+    post:
+      summary: создать отчет для цели
+      description: 'POST /tasks/:task_id/checkpoints'
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - in: header
+          name: Authorization
+          description: заголовок с токеном и его типом Bearer
+          type: string
+          required: true
+        - in: path
+          name: task_id
+          description: id цели
+          type: integer
+          format: int32
+          required: true
+        - name: TasksTaskIdCheckpoints
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/postTasksTaskIdCheckpoints'
+      security:
+        - ttAuth:
+            - 'checkpoints:write'
+      responses:
+        '201':
+          description: 'POST /tasks/:task_id/checkpoints'
+          schema:
+            $ref: '#/definitions/Integrations_V1_Checkpoints_Create'
+        '403':
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Not found
+          schema:
+            $ref: '#/definitions/Error'
+        '422':
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/Error'
+      tags:
+        - checkpoints
+      operationId: postTasksTaskIdCheckpoints
+definitions:
+  Error:
+    type: object
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    description: Error model
+  postTasksTaskIdCheckpoints:
+    type: object
+    properties:
+      fact_value:
+        type: number
+        format: double
+        description: значение которое было достигнуто
+      description:
+        type: string
+        description: описание
+      checkpoint_period_key:
+        type: string
+        description: ключ периода отчетности
+        enum:
+          - y_1
+          - hy_1
+          - hy_2
+          - q_1
+          - q_2
+          - q_3
+          - q_4
+          - m_1
+          - m_2
+          - m_3
+          - m_4
+          - m_5
+          - m_6
+          - m_7
+          - m_8
+          - m_9
+          - m_10
+          - m_11
+          - m_12
+          - final
+          - additional
+      checkpoint_period_year:
+        type: integer
+        format: int32
+        description: год отчета
+      date:
+        type: string
+        format: date
+        description: дата дополнительного или итогового отчета
+    required:
+      - fact_value
+      - checkpoint_period_key
+      - checkpoint_period_year
+    description: 'POST /tasks/:task_id/checkpoints'
+  Integrations_V1_Checkpoints_Create:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: id
+    description: Integrations_V1_Checkpoints_Create model
