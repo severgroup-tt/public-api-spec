@@ -29,7 +29,7 @@ security:
       - 'teams:write'
       - 'teams:read'
 paths:
-  /user:
+  '/user':
     post:
       tags:
         - User
@@ -44,7 +44,7 @@ paths:
         использовать данный uuid.
       responses:
         '201':
-          description: Пользователь добавлен
+          description: Пользователь создан
           content:
             application/json:
               schema:
@@ -53,6 +53,69 @@ paths:
                   id:
                     type: string
                     format: uuid
+  '/user/{userid}/personal_info':
+    put:
+      tags:
+        - User
+      security:
+        - ttAuth:
+          - 'user:write'
+      summary: 'Обновить личную информацию'
+      description: >
+        Операция обновляет личную информацию пользователя.
+      parameters:
+        - name: userid
+          in: path
+          description: Идентификатор пользователя
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/personal_info'
+      responses:
+        '200':
+          description: Личная информация обновлена
+          content: {}
+        '404':
+          description: Пользователь не найден
+          content: {}
+  '/user/{userid}/picture':
+    post:
+      tags:
+        - User
+      security:
+        - ttAuth:
+          - 'user:write'
+      summary: 'Загрузить изображение пользователя'
+      description: >
+        Операция загружает изображение пользователя.
+      parameters:
+        - name: userid
+          in: path
+          description: Идентификатор пользователя
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+            multipart/form-data:
+              schema:
+                properties:
+                  file:
+                    type: string
+                    format: binary
+      responses:
+        '201':
+          description: Изображение пользователя загружено
+          content: {}
+        '404':
+          description: Пользователь не найден
+          content: {}
   '/user/{userid}/disable':
     post:
       tags:
@@ -78,7 +141,7 @@ paths:
             type: string
       responses:
         '201':
-          description: Операция удачна
+          description: Пользователь заблокирован
           content: {}
         '404':
           description: Пользователь не найден
@@ -107,9 +170,9 @@ paths:
           description: Пользователь разблокирован
           content: {}
         '404':
-          description: Пользователь не найде
+          description: Пользователь не найден
           content: {}
-  /user/find:
+  '/user/find':
     get:
       tags:
         - User
@@ -329,7 +392,7 @@ paths:
             Не найден пользователь или у него нет аутентификационных данных
             компании
           content: {}
-  /team:
+  '/team':
     post:
       tags:
         - Team
@@ -344,23 +407,21 @@ paths:
         ID все позиции из предыдущих команд автоматически переносятся в новую
         команду. Если в ID передаётся активная команда то фактически будет
         выполнение обновление данных команды.
-      parameters:
-        - name: team
-          in: query
-          required: true
-          content:
+      requestBody:
+        required: true
+        content:
             application/json:
               schema:
                 type: object
                 properties:
-                  name:
-                    type: string
-                    description: Название команды
                   id:
                     type: string
                     description: >-
                       Идентификатор команды. Должен быть уникальным для
                       компании, задаётся тем кто создаёт команду.
+                  name:
+                    type: string
+                    description: Название команды
                   parent_id:
                     type: string
                     description: Идентификатор родительской команды
@@ -369,6 +430,7 @@ paths:
                     description: Деактивировать и перенести позиции из старых команды
                     items:
                       type: string
+        
       responses:
         '201':
           description: Операция удачно выполнена
@@ -414,7 +476,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Descr
+          description: Ok
           content:
             application/json:
               schema:
@@ -465,10 +527,26 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
       responses:
         '200':
-          description: Descr
-          content: {}
+          description: Позиция создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
   '/team/{teamid}/position/{positionid}':
     get:
       tags:
@@ -494,8 +572,11 @@ paths:
             type: string
       responses:
         '200':
-          description: Descr
-          content: {}
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/position'
     put:
       tags:
         - Team
@@ -550,6 +631,62 @@ paths:
         '200':
           description: Descr
           content: {}
+  '/team/position/link':
+    post:
+      tags:
+        - Team
+      security:
+        - ttAuth:
+            - 'teams:write'
+      summary: 'Связать с позицией'
+      description: >
+        Операция связывает одну позицию с другой.
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                properties:
+                  from_position_id:
+                    type: string
+                  to_position_id:
+                    type: string
+                  role:
+                    type: string
+                    enum:
+                     - CHIEF
+      responses:
+        '200':
+          description: Descr
+          content: {}
+  '/team/position/unlink':
+    post:
+      tags:
+        - Team
+      security:
+        - ttAuth:
+            - 'teams:write'
+      summary: 'Удалить связь с позицией'
+      description: >
+        Операция удаляет связь одной позиции с другой.
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                properties:
+                  from_position_id:
+                    type: string
+                  to_position_id:
+                    type: string
+                  role:
+                    type: string
+                    enum:
+                     - CHIEF
+      responses:
+        '200':
+          description: Descr
+          content: {}
 components:
   schemas:
     auth:
@@ -569,18 +706,50 @@ components:
     team:
       type: object
       properties:
-        name:
-          type: string
         id:
           type: string
           description: >
             Идентификатор команды. Это внешний ключ который идентифицирует
             команду внутри внешней системы.
+        name:
+          type: string
         teams:
           type: array
           items:
             type: string
             description: Список идентификаторов команд
+    position:
+      type: object
+      properties:
+        id:
+          type: string
+        team_id:
+          type: string
+        name:
+          type: string
+          description: Имя позиции
+    personal_info:
+      type: object
+      properties:
+        first_name:
+          type: string
+          description: Имя
+        last_name:
+          type: string
+          description: Фамилия
+        middle_name:
+          type: string
+          description: Отчество
+        date_of_birth:
+          type: string
+          description: Дата рождения ISO_8601
+        sex:
+          type: string
+          description: Пол ISO_5218
+          enum:
+            - MALE
+            - FEMALE
+            - NOT_APPLICABLE
   securitySchemes:
     ttAuth:
       type: oauth2
@@ -593,4 +762,3 @@ components:
             'auth:write': Управление аутентификационными данными
             'teams:write': Редактирование оргструктуры
             'teams:read': Чтение оргструктуры
-
