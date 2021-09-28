@@ -631,7 +631,7 @@ paths:
         '200':
           description: Descr
           content: {}
-  '/team/{teamid}/position/link':
+  '/team/position/link':
     post:
       tags:
         - Team
@@ -641,13 +641,6 @@ paths:
       summary: 'Связать с позицией'
       description: >
         Операция связывает одну позицию с другой.
-      parameters:
-        - name: teamid
-          in: path
-          description: Идентификатор команды
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -666,7 +659,7 @@ paths:
         '200':
           description: Descr
           content: {}
-  '/team/{teamid}/position/unlink':
+  '/team/position/unlink':
     post:
       tags:
         - Team
@@ -676,13 +669,6 @@ paths:
       summary: 'Удалить связь с позицией'
       description: >
         Операция удаляет связь одной позиции с другой.
-      parameters:
-        - name: teamid
-          in: path
-          description: Идентификатор команды
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
