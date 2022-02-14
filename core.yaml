@@ -10,38 +10,80 @@ externalDocs:
   description: TalentTech
   url: 'https://talenttech.ru'
 servers:
-  - url: 'https://integration.api.talenttech.ru/v1'
+  - url: 'https://integration.api.talenttech.ru/core/v1'
 tags:
+  - name: Auth
+    description: |
+      Получение аутентификационного токена
   - name: User
     description: |
       Управление пользователями
-  - name: Authentication
-    description: |
-      Аутентификационные данные пользователей
   - name: Team
     description: |
       Управление организационной структурой компании
+  - name: Position
+    description: |
+      Подраздел организационной структуры для управления штатными должностями
+  - name: DP
+    description: |
+      Данные цифрового профиля
 security:
-  - ttAuth:
-      - 'users:write'
-      - 'users:read'
-      - 'auth:write'
-      - 'teams:write'
-      - 'teams:read'
+  - ttAuth: []
+
 paths:
+  '/auth/authorize':
+    post:
+      security: []
+      tags:
+        - Auth
+      summary: Получение токена для API вызовов
+      description: >
+        Отправка JWT токена сфоромированного с правилами описанными в документации
+        для получения токена необходимого для авторизации API вызовов.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  description: Токен подписанный приватным ключом
+                  type: string      
+      responses:
+        '201':
+          description: Токен создан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '403':
+          description: Ошибка доступа (информация об ошибке будет в ответе)
+          content: {}
+             
   '/user':
     post:
       tags:
-        - User
-      security:
-        - ttAuth:
-            - 'users:write'
+        - User      
       summary: Создать пользователя
       description: >
         Операция создаёт пользователя и возвращает его uuid.
 
         В дальнейшем во всех операциях связанных с пользователем необходимо
         использовать данный uuid.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pernr:
+                  description: Табельный номер сотрудника
+                  type: string
       responses:
         '201':
           description: Пользователь создан
@@ -53,13 +95,41 @@ paths:
                   id:
                     type: string
                     format: uuid
+
+  '/user/find':
+    get:
+      tags:
+        - User
+      summary: Найти пользователя по табельному номеру
+      description: >
+        Ищет пользователя по табельному номеру. В случае если у сотрудника
+        отсутствует ТН, его не получится найти при помощи этого метода.
+        Требуется установить его ТН через интерфейс.
+      parameters:
+        - name: pernr
+          in: query
+          description: Табельный номер сотрудника
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+        '404':
+          description: Пользователь не найден
+
   '/user/{userid}/personal_info':
     put:
       tags:
         - User
-      security:
-        - ttAuth:
-          - 'user:write'
       summary: 'Обновить личную информацию'
       description: >
         Операция обновляет личную информацию пользователя.
@@ -70,6 +140,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -77,12 +148,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/personal_info'
       responses:
-        '200':
+        '201':
           description: Личная информация обновлена
-          content: {}
         '404':
           description: Пользователь не найден
-          content: {}
+
   '/user/{userid}/picture':
     post:
       tags:
@@ -100,6 +170,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -112,10 +183,9 @@ paths:
       responses:
         '201':
           description: Изображение пользователя загружено
-          content: {}
         '404':
           description: Пользователь не найден
-          content: {}
+
   '/user/{userid}/disable':
     post:
       tags:
@@ -139,25 +209,25 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '201':
           description: Пользователь заблокирован
-          content: {}
         '404':
           description: Пользователь не найден
-          content: {}
+
   '/user/{userid}/enable':
     post:
       tags:
         - User
       security:
         - ttAuth:
-            - 'users:write'
       summary: Разблокировать пользователя в компании
       description: >
         Обратно активирует все доступные пользователю способы аутентификации в
         рамках текущей компании. Внимание: пользователя необходимо добавить на
-        занимаемую позицию!
+        занимаемую позицию иначе он сможет войти, но не сможет действовать от лица
+        компании на платформе (использовать модули).
       parameters:
         - name: userid
           in: path
@@ -165,42 +235,17 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '201':
           description: Пользователь разблокирован
-          content: {}
         '404':
           description: Пользователь не найден
-          content: {}
-  '/user/find':
-    get:
-      tags:
-        - User
-      security:
-        - ttAuth:
-            - 'users:read'
-      summary: Найти пользователя по аутентификационным данным
-      description: >
-        Ищет пользователя по аутентификационным данным. Данный метод ищет только
-        внутри аутентификационных данных принадлежащих текущей компании.
-      responses:
-        '200':
-          description: Ok
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-        '404':
-          description: Пользователь не найден
-          content: {}
+
   '/user/{userid}/auth/create':
     post:
       tags:
-        - Authentication
+        - User
       security:
         - ttAuth:
             - 'auth:write'
@@ -221,6 +266,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: auth
           in: query
           required: true
@@ -229,69 +275,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/auth'
       responses:
-        '200':
+        '201':
           description: Способ аутентификации добавлен
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  password:
-                    description: Созданый пароль если применимо к способу аутентификации
-                    type: string
-                    format: string
         '409':
           description: Способ конфликтует с имеющимся. Никаких изменений не произведено.
-          content: {}
-  '/user/{userid}/auth/reset':
-    post:
+
+  '/user/{userid}/auth/delete':
+    delete:
       tags:
-        - Authentication
+        - User
       security:
         - ttAuth:
             - 'auth:write'
-      summary: Изменить пароль для аутентификационных данных
+      summary: Удалить способ аутентификации
       description: >
-        Меняет пароль пользователя если указанный тип данных его поддерживает. В
-        ответ из вызова возвращатся новый пароль. Внимание: пароль видно только
-        1 раз в ответе из вызова.
-      parameters:
-        - name: userid
-          in: path
-          description: Идентификатор пользователя
-          required: true
-          schema:
-            type: string
-        - name: auth
-          in: query
-          required: true
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/auth'
-      responses:
-        '200':
-          description: 'Установлен новый пароль, пароль передан в ответе'
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  password:
-                    type: string
-        '404':
-          description: Не найден пользователь или способ аутентификации
-          content: {}
-  '/user/{userid}/auth/disable':
-    post:
-      tags:
-        - Authentication
-      security:
-        - ttAuth:
-            - 'auth:write'
-      summary: Заблокировать способ аутентификации
-      description: >
-        Блокирует способ аутентификации пользователя. Больше пользователь не
+        Удаляет способ аутентификации пользователя. Больше пользователь не
         сможет аутентифицироваться с этим способом. Внимание: если пользователь
         был аутентифицирован этим способом, то все его сессии аннулируются!
       parameters:
@@ -301,6 +299,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: auth
           in: query
           required: true
@@ -311,14 +310,46 @@ paths:
       responses:
         '201':
           description: Способ заблокирован
-          content: {}
         '404':
           description: Не найден пользователь или способ аутентификации
-          content: {}
+
+  '/user/{userid}/auth/disable':
+    post:
+      tags:
+        - User
+      security:
+        - ttAuth:
+            - 'auth:write'
+      summary: Заблокировать способ входа
+      description: >
+        Выключает способ аутентификации пользователя. Если способ выключен - то не
+        делает ничего. Если пользователь имеет активные сессии в которых был
+        аутентифицирован данным способом - они будут аннулированны.
+      parameters:
+        - name: userid
+          in: path
+          description: Идентификатор пользователя
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: auth
+          in: query
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth'
+      responses:
+        '201':
+          description: Способ разблокирован
+        '404':
+          description: Не найден пользователь или способ аутентификации
+
   '/user/{userid}/auth/enable':
     post:
       tags:
-        - Authentication
+        - User
       security:
         - ttAuth:
             - 'auth:write'
@@ -333,6 +364,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: auth
           in: query
           required: true
@@ -343,14 +375,13 @@ paths:
       responses:
         '201':
           description: Способ разблокирован
-          content: {}
         '404':
           description: Не найден пользователь или способ аутентификации
-          content: {}
+
   '/user/{userid}/auth':
     get:
       tags:
-        - Authentication
+        - User
       security:
         - ttAuth:
             - 'users:read'
@@ -371,35 +402,31 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  type:
-                    type: string
-                    description: Способ аутентификации
-                    enum:
-                      - EMAIL
-                      - PHONE
-                      - LOGIN
-                      - SSOID
-                  value:
-                    type: string
-                    description: 'Значение способа аутентификации (телефон, email и т.д.)'
-                  active:
-                    type: boolean
-                    description: Признак активности аккаунта
+                type: array
+                items:
+                  properties:
+                    type:
+                      type: string
+                      description: Способ аутентификации
+                      enum:
+                        - EMAIL
+                        - PHONE
+                    value:
+                      type: string
+                      description: 'Значение способа аутентификации (телефон, email и т.д.)'
+                    active:
+                      type: boolean
+                      description: Признак активности аккаунта
         '404':
           description: >-
             Не найден пользователь или у него нет аутентификационных данных
             компании
-          content: {}
+
   '/team':
     post:
       tags:
         - Team
-      security:
-        - ttAuth:
-            - 'teams:write'
-      summary: Создать/изменить команду в компании
+      summary: Создать/обновить команду в компании
       description: >
         Создаёт или измеяет команду в оргструктуре организации. Может быть
         указан id предыдущей команды(команд) если команда создася при помощи
@@ -416,7 +443,7 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: >-
+                    description: >
                       Идентификатор команды. Должен быть уникальным для
                       компании, задаётся тем кто создаёт команду.
                   name:
@@ -434,16 +461,12 @@ paths:
       responses:
         '201':
           description: Операция удачно выполнена
-          content: {}
         '422':
-          description: Ой ?)
-          content: {}
+          description: Ошибка
+
     get:
       tags:
         - Team
-      security:
-        - ttAuth:
-            - 'teams:read'
       summary: Корневой список команд
       description: >
         Выводит корневой список команд в компании. Для вывода дочерних команд
@@ -457,13 +480,11 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/team'
+
   '/team/{teamid}':
     get:
       tags:
         - Team
-      security:
-        - ttAuth:
-            - 'teams:read'
       summary: Детальные данные команды
       description: |
         Возвращает данные команды и список дочерних команд.
@@ -476,26 +497,23 @@ paths:
             type: string
       responses:
         '200':
-          description: Ok
+          description: ок
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/team'
         '404':
           description: Команда не найдена или не активна
-          content: {}
+
   '/team/{teamid}/deactivate':
-    post:
+    put:
       tags:
         - Team
-      security:
-        - ttAuth:
-            - 'teams:write'
       summary: Деактивация команды
       description: >
-        Метод деактивирует команду. После деактивации все позиции команды
-        "повисают в воздухе" до тех пор пока эта команда не будет использована
-        при создании новой.
+        Метод деактивирует команду. Команду невозможно активировать повторно.
+        Для возобновления команды требуется создать новую команду и указать 
+        эту в качестве источника, либо просто создать новую команду.
       parameters:
         - name: teamid
           in: path
@@ -506,17 +524,13 @@ paths:
       responses:
         '201':
           description: Команда деактивирована
-          content: {}
         '404':
           description: Команда не найдена или не активна
-          content: {}
+
   '/team/{teamid}/position':
     post:
       tags:
-        - Team
-      security:
-        - ttAuth:
-            - 'teams:write'
+        - Position
       summary: Создать позицию
       description: |
         Создание позиции в команде.
@@ -535,6 +549,7 @@ paths:
                 type: object
                 properties:
                   name:
+                    description: Идентификатор позиции
                     type: string
       responses:
         '200':
@@ -546,14 +561,11 @@ paths:
                 properties:
                   id:
                     type: string
-                    format: uuid
+
   '/team/{teamid}/position/{positionid}':
     get:
       tags:
-        - Team
-      security:
-        - ttAuth:
-            - 'teams:read'
+        - Position
       summary: Получить позицию
       description: |
         Получение информации о позиции в команде.
@@ -572,17 +584,14 @@ paths:
             type: string
       responses:
         '200':
-          description: Ok
+          description: ok
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/position'
     put:
       tags:
-        - Team
-      security:
-        - ttAuth:
-            - 'teams:write'
+        - Position
       summary: Обновить позицию
       description: >
         Обновление данных позиции в команде. В случае передачи нулевого id
@@ -602,15 +611,12 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Descr
-          content: {}
+        '201':
+          description: Позиция обновлена
+
     delete:
       tags:
-        - Team
-      security:
-        - ttAuth:
-            - 'teams:write'
+        - Position
       summary: Удалить позицию
       description: |
         Удаление позиции из команды.
@@ -628,16 +634,13 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Descr
-          content: {}
+        '201':
+          description: Позиция удалена
+
   '/team/position/link':
     post:
       tags:
-        - Team
-      security:
-        - ttAuth:
-            - 'teams:write'
+        - Position
       summary: 'Связать с позицией'
       description: >
         Операция связывает одну позицию с другой.
@@ -653,20 +656,22 @@ paths:
                     type: string
                   role:
                     type: string
+                    description: Тип связи
                     enum:
                      - CHIEF
       responses:
-        '200':
-          description: Descr
-          content: {}
+        '201':
+          description: Связь установлена
+        '404':
+          description: Штатные должности не надены
+        '422':
+          description: Ошибка в параметрах запроса
+
   '/team/position/unlink':
-    post:
+    delete:
       tags:
-        - Team
-      security:
-        - ttAuth:
-            - 'teams:write'
-      summary: 'Удалить связь с позицией'
+        - Position
+      summary: 'Удалить связь между позициями'
       description: >
         Операция удаляет связь одной позиции с другой.
       requestBody:
@@ -679,14 +684,39 @@ paths:
                     type: string
                   to_position_id:
                     type: string
-                  role:
-                    type: string
-                    enum:
-                     - CHIEF
       responses:
-        '200':
-          description: Descr
-          content: {}
+        '201':
+          description: Связь удалена
+        '404':
+          description: Штатные должности не найдены
+
+  '/dp':
+    post:
+      tags:
+        - DP
+      summary: 'Отправить данные цифрового профиля'
+      description: >
+        Платформа ТТ позволяет строить цифровые профили сотрудников.
+        Для отправки данных для построения цифрого профиля необходимо
+        согласовать следующую информацию:
+          - Тип сообщения
+          - Полезную нагрузку сообщения
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  type: string
+                  description: Тип сообщения
+                payload:
+                  type: object
+                  description: Полезная нагрузка
+                  example: { key1: value1, key2: value2, ...: ... }
+
+
+
 components:
   schemas:
     auth:
@@ -698,8 +728,6 @@ components:
           enum:
             - EMAIL
             - PHONE
-            - LOGIN
-            - SSOID
         value:
           type: string
           description: 'Значение способа аутентификации (телефон, email и т.д.)'
@@ -752,13 +780,6 @@ components:
             - NOT_APPLICABLE
   securitySchemes:
     ttAuth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: 'https://talenttech.ru/'
-          scopes:
-            'users:write': Редактирование пользователей
-            'users:read': Чтение пользователей
-            'auth:write': Управление аутентификационными данными
-            'teams:write': Редактирование оргструктуры
-            'teams:read': Чтение оргструктуры
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
