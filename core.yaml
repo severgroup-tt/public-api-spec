@@ -38,7 +38,7 @@ paths:
         - Auth
       summary: Получение токена для API вызовов
       description: >
-        Отправка JWT токена сфоромированного с правилами описанными в документации
+        Отправка JWT токена сфоромированого с правилами описанными в документации
         для получения токена необходимого для авторизации API вызовов.
       requestBody:
         required: true
@@ -67,13 +67,15 @@ paths:
   '/user':
     post:
       tags:
-        - User      
+        - User
       summary: Создать пользователя
       description: >
         Операция создаёт пользователя и возвращает его uuid.
-
         В дальнейшем во всех операциях связанных с пользователем необходимо
         использовать данный uuid.
+
+
+        **Скоуп: user:write**
       requestBody:
         required: true
         content:
@@ -96,7 +98,6 @@ paths:
                     type: string
                     format: uuid
 
-  '/user/find':
     get:
       tags:
         - User
@@ -105,6 +106,9 @@ paths:
         Ищет пользователя по табельному номеру. В случае если у сотрудника
         отсутствует ТН, его не получится найти при помощи этого метода.
         Требуется установить его ТН через интерфейс.
+
+
+        **Скоуп: user:read**
       parameters:
         - name: pernr
           in: query
@@ -126,13 +130,16 @@ paths:
         '404':
           description: Пользователь не найден
 
-  '/user/{userid}/personal_info':
+  '/user/{userid}/metadata':
     put:
       tags:
         - User
       summary: 'Обновить личную информацию'
       description: >
         Операция обновляет личную информацию пользователя.
+
+
+        **Скоуп: user:write**
       parameters:
         - name: userid
           in: path
@@ -146,7 +153,7 @@ paths:
         content:
             application/json:
               schema:
-                $ref: '#/components/schemas/personal_info'
+                $ref: '#/components/schemas/metadata'
       responses:
         '201':
           description: Личная информация обновлена
@@ -157,12 +164,12 @@ paths:
     post:
       tags:
         - User
-      security:
-        - ttAuth:
-          - 'user:write'
       summary: 'Загрузить изображение пользователя'
       description: >
         Операция загружает изображение пользователя.
+
+
+        **Скоуп: user:write**
       parameters:
         - name: userid
           in: path
@@ -176,6 +183,7 @@ paths:
         content:
             multipart/form-data:
               schema:
+                type: object
                 properties:
                   file:
                     type: string
@@ -187,12 +195,9 @@ paths:
           description: Пользователь не найден
 
   '/user/{userid}/disable':
-    post:
+    put:
       tags:
         - User
-      security:
-        - ttAuth:
-            - 'users:write'
       summary: Заблокировать пользователя в компании
       description: >
         Блокировка пользователя деактивирует все учётные данные пользователя
@@ -202,6 +207,9 @@ paths:
         находится. Т.е. если после блокировки его обратно разблокировать, то его
         будет необходимо добавить на позиции в командах иначе он не сможет
         полноценно пользоваться системой.
+
+
+        **Скоуп: user:write**
       parameters:
         - name: userid
           in: path
@@ -217,17 +225,18 @@ paths:
           description: Пользователь не найден
 
   '/user/{userid}/enable':
-    post:
+    put:
       tags:
         - User
-      security:
-        - ttAuth:
       summary: Разблокировать пользователя в компании
       description: >
         Обратно активирует все доступные пользователю способы аутентификации в
         рамках текущей компании. Внимание: пользователя необходимо добавить на
         занимаемую позицию иначе он сможет войти, но не сможет действовать от лица
         компании на платформе (использовать модули).
+
+
+        **Скоуп: user:write**
       parameters:
         - name: userid
           in: path
@@ -242,13 +251,10 @@ paths:
         '404':
           description: Пользователь не найден
 
-  '/user/{userid}/auth/create':
+  '/user/{userid}/auth':
     post:
       tags:
         - User
-      security:
-        - ttAuth:
-            - 'auth:write'
       summary: Добавляет способ аутентификации пользователя
       description: >
         У каждого пользователя может быть неограниченное количество способов
@@ -259,6 +265,9 @@ paths:
         Способ аутентификации который создаётся в рамках этого вызова,
         ассооциирован с компанией в рамках которой был осуществлён вызов. В
         случае если где-то уже были использованы учётные данные будет ошибка.
+
+
+        **Скоуп: auth:write**
       parameters:
         - name: userid
           in: path
@@ -280,115 +289,16 @@ paths:
         '409':
           description: Способ конфликтует с имеющимся. Никаких изменений не произведено.
 
-  '/user/{userid}/auth/delete':
-    delete:
-      tags:
-        - User
-      security:
-        - ttAuth:
-            - 'auth:write'
-      summary: Удалить способ аутентификации
-      description: >
-        Удаляет способ аутентификации пользователя. Больше пользователь не
-        сможет аутентифицироваться с этим способом. Внимание: если пользователь
-        был аутентифицирован этим способом, то все его сессии аннулируются!
-      parameters:
-        - name: userid
-          in: path
-          description: Идентификатор пользователя
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: auth
-          in: query
-          required: true
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/auth'
-      responses:
-        '201':
-          description: Способ заблокирован
-        '404':
-          description: Не найден пользователь или способ аутентификации
-
-  '/user/{userid}/auth/disable':
-    post:
-      tags:
-        - User
-      security:
-        - ttAuth:
-            - 'auth:write'
-      summary: Заблокировать способ входа
-      description: >
-        Выключает способ аутентификации пользователя. Если способ выключен - то не
-        делает ничего. Если пользователь имеет активные сессии в которых был
-        аутентифицирован данным способом - они будут аннулированны.
-      parameters:
-        - name: userid
-          in: path
-          description: Идентификатор пользователя
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: auth
-          in: query
-          required: true
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/auth'
-      responses:
-        '201':
-          description: Способ разблокирован
-        '404':
-          description: Не найден пользователь или способ аутентификации
-
-  '/user/{userid}/auth/enable':
-    post:
-      tags:
-        - User
-      security:
-        - ttAuth:
-            - 'auth:write'
-      summary: Разблокировать способ входа
-      description: >
-        Включает способ аутентификации пользователя. Если способ включен - то не
-        делает ничего.
-      parameters:
-        - name: userid
-          in: path
-          description: Идентификатор пользователя
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: auth
-          in: query
-          required: true
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/auth'
-      responses:
-        '201':
-          description: Способ разблокирован
-        '404':
-          description: Не найден пользователь или способ аутентификации
-
-  '/user/{userid}/auth':
     get:
       tags:
         - User
-      security:
-        - ttAuth:
-            - 'users:read'
       summary: Получить список способов аутентификации
       description: >
         Возвращает список способов аутентификации пользователя в рамках текущей
         компании.
+
+
+        **Скоуп: user:read**
       parameters:
         - name: userid
           in: path
@@ -421,6 +331,102 @@ paths:
           description: >-
             Не найден пользователь или у него нет аутентификационных данных
             компании
+    delete:
+      tags:
+        - User
+      summary: Удалить способ аутентификации
+      description: >
+        Удаляет способ аутентификации пользователя. Больше пользователь не
+        сможет аутентифицироваться с этим способом. Внимание: если пользователь
+        был аутентифицирован этим способом, то все его сессии аннулируются!
+
+
+        **Скоуп: auth:write**
+      parameters:
+        - name: userid
+          in: path
+          description: Идентификатор пользователя
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: auth
+          in: query
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth'
+      responses:
+        '201':
+          description: Способ заблокирован
+        '404':
+          description: Не найден пользователь
+
+  '/user/{userid}/auth/disable':
+    put:
+      tags:
+        - User
+      summary: Заблокировать способ входа
+      description: >
+        Выключает способ аутентификации пользователя. Если способ выключен - то не
+        делает ничего. Если пользователь имеет активные сессии в которых был
+        аутентифицирован данным способом - они будут аннулированны.
+
+
+        **Скоуп: auth:write**
+      parameters:
+        - name: userid
+          in: path
+          description: Идентификатор пользователя
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: auth
+          in: query
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth'
+      responses:
+        '201':
+          description: Способ разблокирован
+        '404':
+          description: Не найден пользователь или способ аутентификации
+
+  '/user/{userid}/auth/enable':
+    put:
+      tags:
+        - User
+      summary: Разблокировать способ входа
+      description: >
+        Включает способ аутентификации пользователя. Если способ включен - то не
+        делает ничего.
+
+
+        **Скоуп: auth:write**
+      parameters:
+        - name: userid
+          in: path
+          description: Идентификатор пользователя
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: auth
+          in: query
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/auth'
+      responses:
+        '201':
+          description: Способ разблокирован
+        '404':
+          description: Не найден пользователь или способ аутентификации
 
   '/team':
     post:
@@ -434,6 +440,9 @@ paths:
         ID все позиции из предыдущих команд автоматически переносятся в новую
         команду. Если в ID передаётся активная команда то фактически будет
         выполнение обновление данных команды.
+
+
+        **Скоуп: team:write**
       requestBody:
         required: true
         content:
@@ -471,6 +480,9 @@ paths:
       description: >
         Выводит корневой список команд в компании. Для вывода дочерних команд
         нужно использовать вызов: GET /team/{teamid}
+
+
+        **Скоуп: team:read**
       responses:
         '200':
           description: Список команд
@@ -488,6 +500,9 @@ paths:
       summary: Детальные данные команды
       description: |
         Возвращает данные команды и список дочерних команд.
+
+
+        **Скоуп: team:read**
       parameters:
         - name: teamid
           in: path
@@ -514,6 +529,9 @@ paths:
         Метод деактивирует команду. Команду невозможно активировать повторно.
         Для возобновления команды требуется создать новую команду и указать 
         эту в качестве источника, либо просто создать новую команду.
+
+
+        **Скоуп: team:write**
       parameters:
         - name: teamid
           in: path
@@ -534,6 +552,9 @@ paths:
       summary: Создать позицию
       description: |
         Создание позиции в команде.
+
+
+        **Скоуп: team:write**
       parameters:
         - name: teamid
           in: path
@@ -569,6 +590,9 @@ paths:
       summary: Получить позицию
       description: |
         Получение информации о позиции в команде.
+
+
+        **Скоуп: team:read**
       parameters:
         - name: teamid
           in: path
@@ -597,6 +621,9 @@ paths:
         Обновление данных позиции в команде. В случае передачи нулевого id
         пользователя, позици становится вакантной, а пользователь который был на
         ней до этого, удаляется с позиции.
+
+
+        **Скоуп: team:write**
       parameters:
         - name: teamid
           in: path
@@ -620,6 +647,9 @@ paths:
       summary: Удалить позицию
       description: |
         Удаление позиции из команды.
+
+
+        **Скоуп: team:write**
       parameters:
         - name: teamid
           in: path
@@ -644,6 +674,9 @@ paths:
       summary: 'Связать с позицией'
       description: >
         Операция связывает одну позицию с другой.
+
+
+        **Скоуп: team:write**
       requestBody:
         required: true
         content:
@@ -667,13 +700,15 @@ paths:
         '422':
           description: Ошибка в параметрах запроса
 
-  '/team/position/unlink':
     delete:
       tags:
         - Position
       summary: 'Удалить связь между позициями'
       description: >
         Операция удаляет связь одной позиции с другой.
+
+
+        **Скоуп: team:write**
       requestBody:
         required: true
         content:
@@ -701,6 +736,9 @@ paths:
         согласовать следующую информацию:
           - Тип сообщения
           - Полезную нагрузку сообщения
+
+
+        **Скоуп: dp:write**
       requestBody:
         required: true
         content:
@@ -756,7 +794,7 @@ components:
         name:
           type: string
           description: Имя позиции
-    personal_info:
+    metadata:
       type: object
       properties:
         first_name:
