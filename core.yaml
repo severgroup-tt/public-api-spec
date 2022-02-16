@@ -752,7 +752,9 @@ paths:
                   type: object
                   description: Полезная нагрузка
                   example: { key1: value1, key2: value2, ...: ... }
-
+      responses:
+        '201':
+          description: Данные добавлены
 
 
 components:
