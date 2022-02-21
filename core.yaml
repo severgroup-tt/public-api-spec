@@ -70,10 +70,8 @@ paths:
         - User
       summary: Создать пользователя
       description: >
-        Операция создаёт пользователя и возвращает его uuid.
-        В дальнейшем во всех операциях связанных с пользователем необходимо
-        использовать данный uuid.
-
+        Операция создаёт пользователя. При создании пользователя необходимо
+        указать его табельный номер иначе пользователь не будет создан.
 
         **Скоуп: user:write**
       requestBody:
@@ -89,48 +87,8 @@ paths:
       responses:
         '201':
           description: Пользователь создан
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
 
-    get:
-      tags:
-        - User
-      summary: Найти пользователя по табельному номеру
-      description: >
-        Ищет пользователя по табельному номеру. В случае если у сотрудника
-        отсутствует ТН, его не получится найти при помощи этого метода.
-        Требуется установить его ТН через интерфейс.
-
-
-        **Скоуп: user:read**
-      parameters:
-        - name: pernr
-          in: query
-          description: Табельный номер сотрудника
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Ok
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-        '404':
-          description: Пользователь не найден
-
-  '/user/{userid}/metadata':
+  '/user/{pernr}/metadata':
     put:
       tags:
         - User
@@ -141,13 +99,12 @@ paths:
 
         **Скоуп: user:write**
       parameters:
-        - name: userid
+        - name: pernr
           in: path
-          description: Идентификатор пользователя
+          description: Табельный номер
           required: true
           schema:
             type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -160,7 +117,7 @@ paths:
         '404':
           description: Пользователь не найден
 
-  '/user/{userid}/picture':
+  '/user/{pernr}/picture':
     post:
       tags:
         - User
@@ -171,13 +128,12 @@ paths:
 
         **Скоуп: user:write**
       parameters:
-        - name: userid
+        - name: pernr
           in: path
-          description: Идентификатор пользователя
+          description: Табельный номер
           required: true
           schema:
             type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -194,7 +150,7 @@ paths:
         '404':
           description: Пользователь не найден
 
-  '/user/{userid}/disable':
+  '/user/{pernr}/disable':
     put:
       tags:
         - User
@@ -211,20 +167,19 @@ paths:
 
         **Скоуп: user:write**
       parameters:
-        - name: userid
+        - name: pernr
           in: path
-          description: Идентификатор пользователя
+          description: Табельный номер
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         '201':
           description: Пользователь заблокирован
         '404':
           description: Пользователь не найден
 
-  '/user/{userid}/enable':
+  '/user/{pernr}/enable':
     put:
       tags:
         - User
@@ -238,20 +193,19 @@ paths:
 
         **Скоуп: user:write**
       parameters:
-        - name: userid
+        - name: pernr
           in: path
-          description: Идентификатор пользователя
+          description: Табельный номер
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         '201':
           description: Пользователь разблокирован
         '404':
           description: Пользователь не найден
 
-  '/user/{userid}/auth':
+  '/user/{pernr}/auth':
     post:
       tags:
         - User
@@ -269,13 +223,12 @@ paths:
 
         **Скоуп: auth:write**
       parameters:
-        - name: userid
+        - name: pernr
           in: path
-          description: Идентификатор пользователя
+          description: Табельный номер
           required: true
           schema:
             type: string
-            format: uuid
         - name: auth
           in: query
           required: true
@@ -363,7 +316,7 @@ paths:
         '404':
           description: Не найден пользователь
 
-  '/user/{userid}/auth/disable':
+  '/user/{pernr}/auth/disable':
     put:
       tags:
         - User
@@ -376,13 +329,12 @@ paths:
 
         **Скоуп: auth:write**
       parameters:
-        - name: userid
+        - name: pernr
           in: path
-          description: Идентификатор пользователя
+          description: Табельный номер
           required: true
           schema:
             type: string
-            format: uuid
         - name: auth
           in: query
           required: true
@@ -396,7 +348,7 @@ paths:
         '404':
           description: Не найден пользователь или способ аутентификации
 
-  '/user/{userid}/auth/enable':
+  '/user/{pernr}/auth/enable':
     put:
       tags:
         - User
@@ -408,13 +360,12 @@ paths:
 
         **Скоуп: auth:write**
       parameters:
-        - name: userid
+        - name: pernr
           in: path
-          description: Идентификатор пользователя
+          description: Табельный номер
           required: true
           schema:
             type: string
-            format: uuid
         - name: auth
           in: query
           required: true
@@ -491,7 +442,14 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/team'
+                  type: object
+                  properties:
+                    id:
+                      description: Идентификатор команды
+                      type: string
+                    name:
+                      description: Название команды
+                      type: string
 
   '/team/{teamid}':
     get:
@@ -551,7 +509,8 @@ paths:
         - Position
       summary: Создать позицию
       description: |
-        Создание позиции в команде.
+        Создание позиции в определённой команде. Если требуется сменить
+        команду позиции, то воспользуйтесь методом перемещения позиции.
 
 
         **Скоуп: team:write**
@@ -569,30 +528,31 @@ paths:
               schema:
                 type: object
                 properties:
+                  id:
+                    description: >
+                      Идентификатор позиции. Должен быть уникальным
+                      в рамках компани.
+                    type: string
                   name:
                     description: Идентификатор позиции
                     type: string
       responses:
-        '200':
+        '201':
           description: Позиция создана
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
 
-  '/team/{teamid}/position/{positionid}':
     get:
       tags:
         - Position
-      summary: Получить позицию
-      description: |
-        Получение информации о позиции в команде.
+      summary: Список позиций в команде
+      description: >
+        Данный метод возвращает полный список позиций в текущей команде
+        переданной в запросе.
+        Позиции возвращаются по 100 штук, смещение указывается в параметре
+        offset, если смещение выходит за пределы, то возвращается пустой
+        массив объектов, без ошибок.
 
 
-        **Скоуп: team:read**
+        **скоуп: team:read**
       parameters:
         - name: teamid
           in: path
@@ -600,6 +560,36 @@ paths:
           required: true
           schema:
             type: string
+        - name: offset
+          in: query
+          description: >
+            Смещение от начала. Если позиций больше нет то вернётся пустой массив.
+          required: false
+          schema:
+            type: integer
+      responses:
+        '404':
+          description: Команда не найдена
+        '200':
+          description: Список позиций в ответе
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/position'
+
+  '/team/position/{positionid}':
+    get:
+      tags:
+        - Position
+      summary: Получить позицию
+      description: |
+        Получение информации о позиции.
+
+
+        **Скоуп: team:read**
+      parameters:
         - name: positionid
           in: path
           description: Идентификатор позиции
@@ -607,6 +597,8 @@ paths:
           schema:
             type: string
       responses:
+        '404':
+          description: Позиция не найдена
         '200':
           description: ok
           content:
@@ -618,26 +610,44 @@ paths:
         - Position
       summary: Обновить позицию
       description: >
-        Обновление данных позиции в команде. В случае передачи нулевого id
+        Обновление данных позиции. В случае передачи нулевого id
         пользователя, позици становится вакантной, а пользователь который был на
         ней до этого, удаляется с позиции.
 
 
+        Если указать идентификатор команды, то произойдет перемещение позиции между командами.
+        При этом все связи позиции с другими позициями, а также пользователь который находится на позиции
+        остаются без изменений
+
+
         **Скоуп: team:write**
       parameters:
-        - name: teamid
-          in: path
-          description: Идентификатор команды
-          required: true
-          schema:
-            type: string
         - name: positionid
           in: path
           description: Идентификатор позиции
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  description: Название позиции
+                  type: string
+                pernr:
+                  description: Табельный номер сотрудника
+                  type: string
+                teamid:
+                  description: Идентификатор команды
+                  type: string
+
       responses:
+        '404':
+          description: Не найдена позиция, пользователь и/или команда
         '201':
           description: Позиция обновлена
 
@@ -646,17 +656,11 @@ paths:
         - Position
       summary: Удалить позицию
       description: |
-        Удаление позиции из команды.
+        Удаление позиции.
 
 
         **Скоуп: team:write**
       parameters:
-        - name: teamid
-          in: path
-          description: Идентификатор команды
-          required: true
-          schema:
-            type: string
         - name: positionid
           in: path
           description: Идентификатор позиции
@@ -667,8 +671,8 @@ paths:
         '201':
           description: Позиция удалена
 
-  '/team/position/link':
-    post:
+  '/team/positionlink':
+    put:
       tags:
         - Position
       summary: 'Связать с позицией'
@@ -683,9 +687,9 @@ paths:
             application/json:
               schema:
                 properties:
-                  from_position_id:
+                  from_positionid:
                     type: string
-                  to_position_id:
+                  to_positionid:
                     type: string
                   role:
                     type: string
@@ -715,9 +719,9 @@ paths:
             application/json:
               schema:
                 properties:
-                  from_position_id:
+                  from_positionid:
                     type: string
-                  to_position_id:
+                  to_positionid:
                     type: string
       responses:
         '201':
@@ -755,7 +759,8 @@ paths:
       responses:
         '201':
           description: Данные добавлены
-
+        '422':
+          description: Неверные параметры запросы
 
 components:
   schemas:
@@ -781,21 +786,34 @@ components:
             команду внутри внешней системы.
         name:
           type: string
-        teams:
+        children:
           type: array
           items:
-            type: string
-            description: Список идентификаторов команд
+            type: object
+            description: Список дочерних команд
+            properties:
+              id:
+                description: Идентификатор команды
+                type: string
+              name:
+                description: Имя команды
+                type: string
+            
     position:
       type: object
       properties:
         id:
+          description: Идентификатор позиции
           type: string
-        team_id:
+        teamid:
+          description: Идентификатор команды
           type: string
         name:
           type: string
           description: Имя позиции
+        pernr:
+          type: string
+          description: Табельный номер сотрудника
     metadata:
       type: object
       properties:
