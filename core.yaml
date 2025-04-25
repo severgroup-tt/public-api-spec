@@ -10,7 +10,7 @@ externalDocs:
   description: TalentTech
   url: 'https://talenttech.ru'
 servers:
-  - url: 'https://integration.api.talenttech.ru/core/v1'
+  - url: 'api.public-api.talenttechlab.com/core/v1'
 tags:
   - name: Auth
     description: |
@@ -219,6 +219,8 @@ paths:
         Способ аутентификации который создаётся в рамках этого вызова,
         ассооциирован с компанией в рамках которой был осуществлён вызов. В
         случае если где-то уже были использованы учётные данные будет ошибка.
+        
+        **type: EMAIL или PHONE**
 
 
         **Скоуп: auth:write**
@@ -253,7 +255,7 @@ paths:
 
         **Скоуп: user:read**
       parameters:
-        - name: userid
+        - name: pernr
           in: path
           description: Идентификатор пользователя
           required: true
@@ -296,7 +298,7 @@ paths:
 
         **Скоуп: auth:write**
       parameters:
-        - name: userid
+        - name: pernr
           in: path
           description: Идентификатор пользователя
           required: true
@@ -412,11 +414,6 @@ paths:
                   parent_id:
                     type: string
                     description: Идентификатор родительской команды
-                  prev_id:
-                    type: array
-                    description: Деактивировать и перенести позиции из старых команды
-                    items:
-                      type: string
 
       responses:
         '204':
@@ -444,6 +441,9 @@ paths:
                 items:
                   type: object
                   properties:
+                    internal_id:
+                      description: Внутренний идентификатор команды
+                      type: string                  
                     id:
                       description: Идентификатор команды
                       type: string
@@ -677,8 +677,11 @@ paths:
         - Position
       summary: 'Связать с позицией'
       description: >
-        Операция связывает одну позицию с другой.
-
+        Операция связывает одну позицию с другой. 
+                     - chief -  руководитель
+                     - chief_team - функциональный (глобальный) руководитель
+                     - chief_direct - непосредственный руководитель
+                     - chief_hrbp - HRBP
 
         **Скоуп: team:write**
       requestBody:
@@ -695,7 +698,7 @@ paths:
                     type: string
                     description: Тип связи
                     enum:
-                     - CHIEF
+                     - chief
       responses:
         '204':
           description: Связь установлена
@@ -779,6 +782,9 @@ components:
     team:
       type: object
       properties:
+        internal_id:
+          description: Внутренний идентификатор команды
+          type: string
         id:
           type: string
           description: >
@@ -792,6 +798,9 @@ components:
             type: object
             description: Список дочерних команд
             properties:
+              internal_id:
+                description: Внутренний идентификатор команды
+                type: string              
               id:
                 description: Идентификатор команды
                 type: string
@@ -803,10 +812,13 @@ components:
       type: object
       properties:
         id:
-          description: Идентификатор позиции
+          description: Внутренний идентификатор позиции
           type: string
         teamid:
           description: Идентификатор команды
+          type: string
+        positionid:
+          description: Внешний идентификатор позиции
           type: string
         name:
           type: string
@@ -814,6 +826,21 @@ components:
         pernr:
           type: string
           description: Табельный номер сотрудника
+        positionlink:
+          type: array
+          items:
+            type: object
+            description: Связи штатной должности
+            properties:
+              from_positionid:
+                description: От штатной должности
+                type: string
+              to_positionid:
+                description: К штатной должности
+                type: string
+              role:
+                description: Тип связи
+                type: string                
     metadata:
       type: object
       properties:
