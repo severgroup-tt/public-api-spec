@@ -852,19 +852,77 @@ components:
           description: Фамилия
         middle_name:
           type: string
-          description: Отчество
+          description: Отчество (при наличии)
         date_of_birth:
           type: string
-          description: Дата рождения ISO_8601
+          description: Дата рождения в формате ISO_8601
         sex:
           type: string
-          description: Пол ISO_5218
+          description: Пол в формате ISO_5218
           enum:
             - MALE
             - FEMALE
             - NOT_APPLICABLE
-  securitySchemes:
-    ttAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+        country:
+          type: string
+          description: Страна пользователя
+        city:
+          type: string
+          description: Город пользователя
+        language:
+          type: string
+          description: Язык пользователя
+        metadata:
+          type: object
+          description: Метаданные пользователя
+          properties:
+            job_function:
+              type: string
+              description: Функция
+            job_position:
+              type: string
+              description: Позиция
+            job_duration:
+              type: string
+              description: Стаж работы
+            education_level:
+              type: string
+              description: Уровень образования
+            job_class:
+              type: string
+              description: Разряд
+            job_employment_type:
+              type: string
+              description: Тип трудоустройства
+            job_position_type:
+              type: string
+              description: Тип должности
+            team_name:
+              type: string
+              description: Команда
+            job_grade:
+              type: string
+              description: Грейд
+            age:
+              type: string
+              description: Возраст
+            custom_field_1:
+              type: string
+              description: Произвольный фильтр №1
+            custom_field_2:
+              type: string
+              description: Произвольный фильтр №2
+            custom_field_3:
+              type: string
+              description: Произвольный фильтр №3
+            custom_field_4:
+              type: string
+              description: Произвольный фильтр №4
+            custom_field_5:
+              type: string
+              description: Произвольный фильтр №5              
+    securitySchemes:
+      ttAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
