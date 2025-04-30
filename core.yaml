@@ -863,19 +863,19 @@ components:
             - MALE
             - FEMALE
             - NOT_APPLICABLE
-        country:
-          type: string
-          description: Страна пользователя
-        city:
-          type: string
-          description: Город пользователя
-        language:
-          type: string
-          description: Язык пользователя
         metadata:
           type: object
           description: Метаданные пользователя
           properties:
+            country:
+              type: string
+              description: Страна пользователя
+            city:
+              type: string
+              description: Город пользователя
+            language:
+              type: string
+              description: Язык пользователя
             job_function:
               type: string
               description: Функция
