@@ -6,9 +6,6 @@ info:
   contact:
     email: support@talenttech.ru
   version: 1.0.0
-externalDocs:
-  description: TalentTech
-  url: 'https://talenttech.ru'
 servers:
   - url: 'api.public-api.talenttechlab.com/core/v1'
 tags:
