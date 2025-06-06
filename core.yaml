@@ -86,7 +86,7 @@ paths:
           description: Пользователь создан
 
   '/user/{pernr}/metadata':
-    put:
+    post:
       tags:
         - User
       summary: 'Обновить личную информацию'
